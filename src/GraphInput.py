@@ -4,15 +4,26 @@ import igraph
 from igraph import *
 
 
+def validate_graph_exists(func, *args, **kwargs):
+    def wrapper(self):
+        if self._graph is None:
+            raise Exception("Graph not initialized")
+        return func(self, *args, **kwargs)
+
+    return wrapper
 class GraphInput(abc.ABC):
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self._graph = None
 
-    @staticmethod
-    def read_input_file_and_convert(filename) -> igraph.Graph:
+
+    @abc.abstractmethod
+    def read_input_file_and_convert(self, filename) -> igraph.Graph:
         pass
+
+    @validate_graph_exists
+    def computed_sensity(self) -> float:
+        return self._graph.density()
 
 
 class CsvFileGraphInput(GraphInput):
