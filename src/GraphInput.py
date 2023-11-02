@@ -25,6 +25,9 @@ class GraphInput(abc.ABC):
     def computed_sensity(self) -> float:
         return self._graph.density()
 
+    @validate_graph_exists
+    def compute_average_path_length(self) -> float:
+        return self._graph.average_path_length()
 
 class CsvFileGraphInput(GraphInput):
     def __init__(self):
