@@ -5,10 +5,10 @@ from igraph import *
 
 
 def validate_graph_exists(func, *args, **kwargs):
-    def wrapper(self):
-        if self._graph is None:
+    def wrapper(*args, **kwargs):
+        if args[0]._graph is None:
             raise Exception("Graph not initialized")
-        return func(self, *args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
 class GraphInput(abc.ABC):
