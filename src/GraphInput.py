@@ -1,4 +1,5 @@
 import abc
+from typing import Optional
 
 import igraph
 from igraph import *
@@ -11,11 +12,12 @@ def validate_graph_exists(func, *args, **kwargs):
         return func(*args, **kwargs)
 
     return wrapper
+
+
 class GraphInput(abc.ABC):
 
     def __init__(self):
-        self._graph = None
-
+        self._graph: Optional[Graph] = None
 
     @abc.abstractmethod
     def read_input_file_and_convert(self, filename) -> igraph.Graph:
