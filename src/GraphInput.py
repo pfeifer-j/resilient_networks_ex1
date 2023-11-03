@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, List, Dict
 import igraph
 import abc
 from collections import Counter
@@ -80,6 +80,41 @@ class GraphInput(abc.ABC):
                 edge_count += 1
 
         return edge_count
+
+    @validate_graph_exists
+    def compute_cpl_for_all_nodes(self) -> List[float]:
+        cpls = []
+        for node in self._graph.vs:
+            cpl = self.compute_characteristic_path_length(node)
+            cpls.append(cpl)
+        return cpls
+
+    @validate_graph_exists
+    def compute_characteristic_path_length(self, node) -> float:
+        shortest_paths = self._graph.shortest_paths(node, mode=igraph.ALL)
+        cpl_values = [sum(sp) for sp in shortest_paths if sp != float("inf")]
+
+        return sum(cpl_values) / len(cpl_values) if cpl_values else 0.0
+
+    @validate_graph_exists
+    def compute_cohesiveness_for_each_node(self) -> Dict[int, int]:
+        cohesiveness_values = {}
+
+        for node in self._graph.vs:
+            # Calculate k(G) (original edge connectivity)
+            edge_connectivity_G = self._graph.edge_disjoint_paths()
+
+            # Remove the vertex from the graph and calculate k(G - v)
+            subgraph = self._graph.copy()
+            subgraph.delete_vertices(node.index)
+            edge_connectivity_G_minus_v = subgraph.edge_disjoint_paths()
+
+            # Calculate cohesiveness c(v) = k(G) - k(G - v)
+            cohesiveness = edge_connectivity_G - edge_connectivity_G_minus_v
+
+            cohesiveness_values[node.index] = cohesiveness
+
+        return cohesiveness_values
 
 
 class CsvFileGraphInput(GraphInput):
