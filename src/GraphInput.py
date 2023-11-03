@@ -2,6 +2,7 @@ import os
 from typing import Optional
 import igraph
 import abc
+from collections import Counter
 
 
 def validate_graph_exists(func, *args, **kwargs):
@@ -30,22 +31,23 @@ class GraphInput(abc.ABC):
         return self._graph.average_path_length()
 
     @validate_graph_exists
-    def compute_average_clustering_coefficient(self) -> float:
-        # The average clustering coefficient (C_avg) of a graph can be calculated using the following formula:
+    def compute_clustering_coefficient(self) -> (float, Dict[float, int]):
+        # Calculate the average clustering coefficient (C_avg) of a graph and its distribution.
         # C_avg = (1 / n) * Σ Ci
-
-        # To calculate the clustering coefficient (Ci) for an individual node, you can use the following formula:
         # Ci = (2 * Ei) / (ki * (ki - 1))
         # clustering_coefficient = 2 * number of edges between neighbors of i / ((degree of i) * (degree of i-1))
 
         total_number_of_nodes = len(self._graph.vs)
         total_clustering_coefficient = 0.0
+        clustering_coefficients = (
+            []
+        )  # List to store clustering coefficients for all nodes
 
         for node in self._graph.vs:
             neighbors = node.neighbors()
             number_of_neighbors = len(neighbors)
             if number_of_neighbors < 2:
-                continue  # Skip nodes with degree less than 2 to avoid division by zero
+                continue  # Skip nodes with a degree less than 2 to avoid division by zero
 
             edges_between_neighbors = self.count_edges_between_neighbors(
                 node, neighbors
@@ -57,11 +59,18 @@ class GraphInput(abc.ABC):
             )
             total_clustering_coefficient += clustering_coefficient
 
+            # Append the clustering coefficient to the list
+            clustering_coefficients.append(clustering_coefficient)
+
         # Calculate average clustering_coefficient
         average_clustering_coefficient = (
             total_clustering_coefficient / total_number_of_nodes
         )
-        return average_clustering_coefficient
+
+        # Calculate the distribution of clustering coefficients
+        clustering_coefficient_distribution = Counter(clustering_coefficients)
+
+        return average_clustering_coefficient, clustering_coefficient_distribution
 
     def count_edges_between_neighbors(self, node, neighbors):
         edge_count = 0
