@@ -3,6 +3,7 @@ import os
 import random
 from typing import Optional, List, Dict, Iterable
 import igraph
+import csv
 import abc
 from collections import Counter
 
@@ -153,7 +154,19 @@ class CsvFileGraphInput(GraphInput):
         super().__init__()
 
     def read_input_file_and_convert(self, filename, directed=False) -> None:
-        return igraph.Graph.Read_Ncol(filename, directed=directed)
+        edges = []
+
+        with open(filename, "r") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            next(csv_reader)  # Skip the header row
+            for row in csv_reader:
+                node_1, node_2 = int(row[0]), int(row[1])
+                edges.append((node_1, node_2))
+
+        self._graph = igraph.Graph(edges=edges, directed=directed)
+        self._graph.delete_vertices(
+            [v.index for v in self._graph.vs if v.degree() == 0]
+        )
 
 
 class TxtFileGraphInput(GraphInput):
