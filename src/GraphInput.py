@@ -1,5 +1,7 @@
+import copy
 import os
-from typing import Optional, List, Dict
+import random
+from typing import Optional, List, Dict, Iterable
 import igraph
 import abc
 from collections import Counter
@@ -16,7 +18,7 @@ def validate_graph_exists(func, *args, **kwargs):
 
 class GraphInput(abc.ABC):
     def __init__(self):
-        self._graph: Optional[Graph] = None
+        self._graph: Optional[igraph.Graph] = None
 
     @abc.abstractmethod
     def read_input_file_and_convert(self, filename) -> igraph.Graph:
@@ -116,7 +118,34 @@ class GraphInput(abc.ABC):
 
         return cohesiveness_values
 
+    @validate_graph_exists
+    def compute_edge_persistence_under_greedy_attack(self) -> Dict:
+        graph = copy.deepcopy(self._graph)
+        diameters = {}
+        diameters[0] = graph.diameter()
+        for _ in range(50):
+            for _ in range(10):
+                degrees = graph.degree()
+                index_of_node_with_max_degree = degrees.index(max(degrees))
+                graph.delete_vertices(index_of_node_with_max_degree)
+            proportional_removed_nodes = 1 - (len(graph.vs) / len(self._graph.vs))
+            diameters[proportional_removed_nodes] = graph.diameter()
+        return diameters
 
+    @validate_graph_exists
+    def compute_edge_persistence_under_random_attack(self) -> Dict:
+        graph = copy.deepcopy(self._graph)
+        diameters = {}
+        random.seed(42)
+        diameters[0] = graph.diameter()
+        for _ in range(50):
+            for _ in range(10):
+                degrees = graph.degree()
+                random_node = random.randrange(0, len(degrees))
+                graph.delete_vertices(random_node)
+            proportional_removed_nodes = 1 - (len(graph.vs) / len(self._graph.vs))
+            diameters[proportional_removed_nodes] = graph.diameter()
+        return diameters
 class CsvFileGraphInput(GraphInput):
     def __init__(self):
         super().__init__()
