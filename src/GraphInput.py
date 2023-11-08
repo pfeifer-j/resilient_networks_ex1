@@ -57,7 +57,7 @@ class GraphInput(abc.ABC):
 
             # Calculate clustering_coefficient for each node
             clustering_coefficient = (2 * edges_between_neighbors) / (
-                number_of_neighbors * (number_of_neighbors - 1)
+                    number_of_neighbors * (number_of_neighbors - 1)
             )
             total_clustering_coefficient += clustering_coefficient
 
@@ -66,7 +66,7 @@ class GraphInput(abc.ABC):
 
         # Calculate average clustering_coefficient
         average_clustering_coefficient = (
-            total_clustering_coefficient / total_number_of_nodes
+                total_clustering_coefficient / total_number_of_nodes
         )
 
         # Calculate the distribution of clustering coefficients
@@ -119,33 +119,35 @@ class GraphInput(abc.ABC):
         return cohesiveness_values
 
     @validate_graph_exists
-    def compute_edge_persistence_under_greedy_attack(self) -> Dict:
+    def compute_edge_persistence_under_greedy_attack(self, runs_without_result=10, total_number_of_runs=100) -> Dict:
         graph = copy.deepcopy(self._graph)
         diameters = {}
         diameters[0] = graph.diameter()
-        for _ in range(50):
-            for _ in range(10):
-                degrees = graph.degree()
-                index_of_node_with_max_degree = degrees.index(max(degrees))
-                graph.delete_vertices(index_of_node_with_max_degree)
+        for i in range(total_number_of_runs * runs_without_result):
+            degrees = graph.degree()
+            index_of_node_with_max_degree = degrees.index(max(degrees))
+            graph.delete_vertices(index_of_node_with_max_degree)
             proportional_removed_nodes = 1 - (len(graph.vs) / len(self._graph.vs))
-            diameters[proportional_removed_nodes] = graph.diameter()
+            if i % runs_without_result == 1:
+                diameters[proportional_removed_nodes] = graph.diameter()
         return diameters
 
     @validate_graph_exists
-    def compute_edge_persistence_under_random_attack(self) -> Dict:
+    def compute_edge_persistence_under_random_attack(self, runs_without_result=10, total_number_of_runs=100) -> Dict:
         graph = copy.deepcopy(self._graph)
         diameters = {}
         random.seed(42)
         diameters[0] = graph.diameter()
-        for _ in range(50):
-            for _ in range(10):
-                degrees = graph.degree()
-                random_node = random.randrange(0, len(degrees))
-                graph.delete_vertices(random_node)
+        for i in range(total_number_of_runs * runs_without_result):
+            degrees = graph.degree()
+            random_node = random.randrange(0, len(degrees))
+            graph.delete_vertices(random_node)
             proportional_removed_nodes = 1 - (len(graph.vs) / len(self._graph.vs))
-            diameters[proportional_removed_nodes] = graph.diameter()
+            if i % runs_without_result == 1:
+                diameters[proportional_removed_nodes] = graph.diameter()
         return diameters
+
+
 class CsvFileGraphInput(GraphInput):
     def __init__(self):
         super().__init__()
