@@ -119,7 +119,6 @@ class GraphInput(abc.ABC):
     # Helper for the calculation of the clustering coefficient
     def count_edges_between_neighbors(self, node, neighbors):
         edge_count = 0
-
         for neighbor in neighbors:
             if self._graph.are_connected(node.index, neighbor.index):
                 edge_count += 1
