@@ -55,39 +55,57 @@ class GraphInput(abc.ABC):
 
             # Calculate clustering_coefficient for each node
             clustering_coefficient = (2 * edges_between_neighbors) / (
-                    number_of_neighbors * (number_of_neighbors - 1)
+                number_of_neighbors * (number_of_neighbors - 1)
             )
             total_clustering_coefficient += clustering_coefficient
             clustering_coefficients.append(clustering_coefficient)
 
         # Calculate average clustering_coefficient
         average_clustering_coefficient = (
-                total_clustering_coefficient / total_number_of_nodes
+            total_clustering_coefficient / total_number_of_nodes
         )
         clustering_coefficient_distribution = Counter(clustering_coefficients)
 
         return average_clustering_coefficient, clustering_coefficient_distribution
 
+    @staticmethod
+    def count_edges_between_neighbors(self, node, neighbors):
+        edge_count = 0
+        for neighbor in neighbors:
+            if self._graph.are_connected(node.index, neighbor.index):
+                edge_count += 1
+
+        return edge_count
+
     # Metric 5: Distribution of the cohesiveness
-    @validate_graph_exists
     def compute_cohesiveness_distribution(self) -> Dict[int, int]:
-        cohesiveness_values = {}
+        cohesiveness_values = []
 
-        for node in self._graph.vs:
-            # Calculate k(G) (original edge connectivity)
-            edge_connectivity_G = self._graph.edge_disjoint_paths()
+        for vertex in self._graph.vs:
+            cohesiveness_values.append(
+                self.cohesiveness_for_a_node(self._graph, vertex.index)
+            )
 
-            # Remove the vertex from the graph and calculate k(G - v)
-            subgraph = self._graph.copy()
-            subgraph.delete_vertices(node.index)
-            edge_connectivity_G_minus_v = subgraph.edge_disjoint_paths()
+        cohesiveness_distribution = dict(Counter(cohesiveness_values))
 
-            # Calculate cohesiveness c(v) = k(G) - k(G - v)
-            cohesiveness = edge_connectivity_G - edge_connectivity_G_minus_v
+        return cohesiveness_distribution
 
-            cohesiveness_values[node.index] = cohesiveness
+    @staticmethod
+    def cohesiveness_for_a_node(graph, node):
+        # Calculate k(G)
+        connectivity_of_G = graph.vertex_connectivity()
 
-        return cohesiveness_values
+        # Remove the vertex v
+        modified_graph = graph.copy()
+        modified_graph.delete_vertices(node)
+
+        # Calculate k(G-v)
+        connectivity_of_G_minus_v = modified_graph.vertex_connectivity()
+
+        # Calculate cohesiveness c(v)
+        cohesiveness = connectivity_of_G - connectivity_of_G_minus_v
+
+        return cohesiveness
 
     # Metric 6: Edge persistence under greedy attack
     @validate_graph_exists
@@ -115,15 +133,6 @@ class GraphInput(abc.ABC):
             graph.delete_vertices(random_node)
             removed_nodes += 1
         return removed_nodes
-
-    # Helper for the calculation of the clustering coefficient
-    def count_edges_between_neighbors(self, node, neighbors):
-        edge_count = 0
-        for neighbor in neighbors:
-            if self._graph.are_connected(node.index, neighbor.index):
-                edge_count += 1
-
-        return edge_count
 
 
 # CSV File Reader
