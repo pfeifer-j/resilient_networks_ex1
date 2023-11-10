@@ -68,7 +68,7 @@ class GraphInput(abc.ABC):
 
         return average_clustering_coefficient, clustering_coefficient_distribution
 
-    @staticmethod
+    # Helper for the calculation of the clustering coefficient
     def count_edges_between_neighbors(self, node, neighbors):
         edge_count = 0
         for neighbor in neighbors:
@@ -95,14 +95,11 @@ class GraphInput(abc.ABC):
         # Calculate k(G)
         connectivity_of_G = graph.vertex_connectivity()
 
-        # Remove the vertex v
+        # Calculate k(G-v)
         modified_graph = graph.copy()
         modified_graph.delete_vertices(node)
-
-        # Calculate k(G-v)
         connectivity_of_G_minus_v = modified_graph.vertex_connectivity()
 
-        # Calculate cohesiveness c(v)
         cohesiveness = connectivity_of_G - connectivity_of_G_minus_v
 
         return cohesiveness
@@ -145,7 +142,7 @@ class CsvFileGraphInput(GraphInput):
 
         with open(filename, "r") as csv_file:
             csv_reader = csv.reader(csv_file)
-            next(csv_reader)  # Skip the header row
+            next(csv_reader)
             for row in csv_reader:
                 node_1, node_2 = int(row[0]), int(row[1])
                 edges.append((node_1, node_2))
